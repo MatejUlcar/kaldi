@@ -3,7 +3,7 @@
 . ./path.sh || exit 1
 . ./cmd.sh || exit 1
 
-stage=9
+stage=0
 nj_train=16 # number of parallel jobs
 nj_test=8
 lm_order=3 # language model order (n-gram quantity)
@@ -14,9 +14,12 @@ lm_order=3 # language model order (n-gram quantity)
 train_cmd=run.pl
 decode_cmd=run.pl
 if [ $stage -le 0 ]; then
-    # Removing previously created data (from last run.sh execution)
-    rm -rf exp mfcc data/train/spk2utt data/train/cmvn.scp data/train/feats.scp data/train/split1 data/test/spk2utt data/test/cmvn.scp \ 
-    data/test/feats.scp data/test/split1 data/local/lang data/lang data/lang_big data/local/tmp data/local/dict/lexiconp.txt
+    echo 
+    echo "===== PREPARING RAW DATA ====="
+    echo
+    
+    local/
+    
 fi
 
 if [ $stage -le 2 ]; then
@@ -24,14 +27,8 @@ if [ $stage -le 2 ]; then
     echo "===== PREPARING ACOUSTIC DATA ====="
     echo
 
-    # Needs to be prepared by hand (or using self written scripts):
-    #
-    # spk2gender  [<speaker-id> <gender>]
-    # wav.scp     [<uterranceID> <full_path_to_audio_file>]
-    # text           [<uterranceID> <text_transcription>]
-    # utt2spk     [<uterranceID> <speakerID>]
-    # corpus.txt  [<text_transcription>]
-
+    local/data_prepare/prepare_files.sh
+    
     # Making spk2utt files
     utils/utt2spk_to_spk2utt.pl data/train/utt2spk > data/train/spk2utt
     utils/utt2spk_to_spk2utt.pl data/dev/utt2spk > data/dev/spk2utt
@@ -65,9 +62,8 @@ if [ $stage -le 3 ]; then
     echo "===== PREPARING LANGUAGE DATA ====="
     echo
 
-    # Needs to be prepared by hand (or using self written scripts):
+    # Needs to be prepared by hand:
     #
-    # lexicon.txt           [<word> <phone 1> <phone 2> ...]
     # nonsilence_phones.txt    [<phone>]
     # silence_phones.txt    [<phone>]
     # optional_silence.txt  [<phone>]
@@ -107,8 +103,6 @@ if [ $stage -le 3 ]; then
     lang=data/lang
     arpa2fst --disambig-symbol=#0 --read-symbol-table=$lang/words.txt $local/tmp/lm.arpa $lang/G.fst
     
-    #lang_big=data/lang_big
-    #arpa2fst --disambig-symbol=#0 --read-symbol-table=$lang_big/words.txt $local/ccGigafida-Moses-LM.arpa $lang_big/G.fst
 
 fi
 
@@ -121,21 +115,11 @@ if [ $stage -le 4 ]; then
     utils/subsed_data_dir.sh data/dev 2000 data/dev_mini
     #train
     steps/train_mono.sh --boost-silence 1.25 --nj $nj_train --cmd "$train_cmd" data/train_short data/lang exp/mono  || exit 1
-    # steps/train_mono.sh --boost-silence 1.25 --totgauss 10000 --nj $nj_train --num-threads $nj_train --cmd "$train_cmd" data/train data/lang exp/mono  || exit 1
     #decode
     #utils/mkgraph.sh --mono data/lang_mini exp/mono exp/mono/graph || exit 1
     #steps/decode.sh --config conf/decode.config --nj $nj_test --cmd "$decode_cmd" exp/mono/graph data/dev_mini exp/mono/decode
-    #rescore
-    #steps/lmrescore.sh --cmd "$decode_cmd" data/lang data/lang_big data/test exp/mono/decode exp/mono/decode2
     #align
     steps/align_si.sh --boost-silence 1.25 --nj $nj_train --cmd "$train_cmd" data/train data/lang exp/mono exp/mono_ali || exit 1
-
-    # echo 
-    # echo "=== MONO2/full ==="
-    # echo
-    # steps/train_mono.sh --boost-silence 1.15 --totgauss 20000 --nj $nj --cmd "$train_cmd" data/train data/lang exp/mono2 || exit 1
-    # utils/mkgraph.sh --mono data/lang exp/mono2 exp/mono2/graph || exit 1
-    # steps/decode.sh --config conf/decode.config --nj $nj --cmd "$decode_cmd" exp/mono2/graph data/test exp/mono2/decode
 
 fi
 
@@ -162,7 +146,6 @@ if [ $stage -le 6 ]; then
 exit 1
     # utils/mkgraph.sh data/lang exp/tri2b exp/tri2b/graph || exit 1
     # steps/decode.sh --config conf/decode.config --nj $nj --cmd "$decode_cmd" exp/tri2b/graph data/test exp/tri2b/decode || exit 1
-    # steps/lmrescore.sh --cmd "$decode_cmd" data/lang data/lang_big data/test exp/tri2b/decode exp/tri2b/decode2
     # Align all data with LDA+MLLT system (tri2b)
     steps/align_si.sh --nj $nj_train --cmd "$train_cmd" --use-graphs true data/train data/lang exp/tri2b exp/tri2b_ali || exit 1
 fi
@@ -175,18 +158,15 @@ if [ $stage -le 7 ]; then
     ## Do LDA+MLLT+SAT, and decode.
     steps/train_sat.sh --cmd "$train_cmd" 3500 30000 data/train data/lang exp/tri2b_ali exp/tri3b || exit 1
 
-fi
-if [ $stage -le 8 ]; then
     utils/mkgraph.sh data/lang exp/tri3b exp/tri3b/graph || exit 1
     steps/decode_fmllr.sh --config conf/decode.config --nj $nj_test --num-threads 8 --cmd "$decode_cmd" \
       exp/tri3b/graph data/dev_mini exp/tri3b/decode || exit 1
-    #steps/lmrescore.sh --cmd "$decode_cmd" data/lang data/lang_big data/test exp/tri3b/decode exp/tri3b/decode2 || exit 1
     # Align all data with LDA+MLLT+SAT system (tri3b)
     steps/align_fmllr.sh --nj $nj_train --cmd "$train_cmd" --use-graphs true \
        data/train data/lang exp/tri3b exp/tri3b_ali || exit 1
 fi
 
-if [ $stage -le 9 ]; then
+if [ $stage -le 8 ]; then
     echo "compute pronunciation and silence probabilities, re-create lang directory"
     steps/get_prons.sh --cmd "$train_cmd" data/train data/lang exp/tri3b
     utils/dict_dir_add_pronprobs.sh --max-normalize true \
@@ -200,13 +180,12 @@ if [ $stage -le 9 ]; then
     steps/decode_fmllr.sh --nj $nj_test --cmd "$decode_cmd" \
         exp/tri3b/graph_sp data/dev_mini exp/tri3b/decode_sp
 fi
-#train_cmd=slurm.pl
+
 if [ $stage -le 10 ]; then
     echo
     echo "===== NNET ====="
     echo
-    #local/run_nnet2.sh || exit 1
-    #local/chain/run_tdnn.sh --stage 0 || exit 1
+    local/chain/tuning/run_tdnn_1a.sh --stage 0 || exit 1
 fi
 
 wait
@@ -215,7 +194,7 @@ if [ $stage -le 11 ]; then
     echo
     echo "===== RNNLM ====="
     echo
-    #local/rnnlm/run_rnnlm.sh || exit 1
+    local/rnnlm/run_rnnlm_1a.sh || exit 1
 fi
 
 echo
