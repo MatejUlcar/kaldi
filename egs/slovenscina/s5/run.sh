@@ -13,16 +13,9 @@ lm_order=3 # language model order (n-gram quantity)
 [[ $# -ge 1 ]] && { echo "Wrong arguments!"; exit 1; }
 train_cmd=run.pl
 decode_cmd=run.pl
-if [ $stage -le 0 ]; then
-    echo 
-    echo "===== PREPARING RAW DATA ====="
-    echo
-    
-    local/
-    
-fi
 
-if [ $stage -le 2 ]; then
+
+if [ $stage -le 1 ]; then
     echo
     echo "===== PREPARING ACOUSTIC DATA ====="
     echo
@@ -35,7 +28,7 @@ if [ $stage -le 2 ]; then
     utils/utt2spk_to_spk2utt.pl data/test/utt2spk > data/test/spk2utt
 fi
 
-if [ $stage -le 1 ]; then
+if [ $stage -le 2 ]; then
     echo
     echo "===== FEATURES EXTRACTION ====="
     echo
