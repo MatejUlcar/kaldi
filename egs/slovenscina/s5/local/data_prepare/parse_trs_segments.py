@@ -6,7 +6,7 @@ task = sys.argv[1] #train ali test
 trsfilename = sys.argv[2]
 
 trspath = 'local/raw_data/gos2/Spoken corpus Gos VideoLectures 2.0 (transcription)/GosVL.TRS/' #folder with transcription
-pd_path = 'local/data_prepare' #prepared data folder
+pd_path = 'local/data_prepare/' #prepared data folder
 wav_path = 'local/raw_data/gos2/GosVL.wav/' #folder with audio files
 #kaldi_path = '/opt/kaldi/egs/slovenscina/slovenscina_audio/'
 
