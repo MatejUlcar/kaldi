@@ -57,8 +57,8 @@ def izgovori(w):
     return opc
 
 
-sl = open('sloleks-sl_v1.2.tbl', 'r')
-lex = open('lexicon_u2.txt', 'w')
+sl = open('local/raw_data/sloleks/sloleks-sl_v1.2.tbl', 'r')
+lex = open('local/data_prepare/lexicon_u.txt', 'w')
 ignored = ['0','1','2','3','4','5','6','7','8','9',',','.','-','\'','µ']
 for line in sl:
     w = line.split('\t')[0]

@@ -14,6 +14,7 @@ mkdir -p $dp_path/traindev/sorted
 mkdir -p $kaldi_proj_path/data/train
 mkdir -p $kaldi_proj_path/data/dev
 mkdir -p $kaldi_proj_path/data/test
+mkdir -p $kaldi_proj_path/data/local/dict
 
 # remove old files
 #rm audio_ordering.sh
