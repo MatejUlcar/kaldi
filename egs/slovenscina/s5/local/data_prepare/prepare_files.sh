@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-kaldi_proj_path=$KALDI_ROOT
+kaldi_proj_path=$KALDI_ROOT/egs/slovenscina/s5
 dp_path=$kaldi_proj_path/local/data_prepare
 
 train_files=( )
