@@ -8,7 +8,7 @@ set -euo pipefail
 # iVector-related parts of the script.  See those scripts for examples
 # of usage.
 
-stage=3
+stage=0
 train_set=train
 test_sets="dev_sofes dev_gos test"
 gmm=tri3b

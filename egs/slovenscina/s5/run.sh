@@ -105,7 +105,7 @@ if [ $stage -le 4 ]; then
     echo "===== MONO ====="
     echo 
     utils/subset_data_dir.sh --shortest data/train 20000 data/train_short
-    utils/subsed_data_dir.sh data/dev 2000 data/dev_mini
+    utils/subset_data_dir.sh data/dev 2000 data/dev_mini
     #train
     steps/train_mono.sh --boost-silence 1.25 --nj $nj_train --cmd "$train_cmd" data/train_short data/lang exp/mono  || exit 1
     #decode
